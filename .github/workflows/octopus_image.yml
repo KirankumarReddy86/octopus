@@ -1,4 +1,4 @@
-name: Build and Push ARM Docker Image
+name: Build and Push Docker Image to Docker Hub
 
 on:
   push:
@@ -11,13 +11,15 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     strategy:
       matrix:
-        os: [macos-latest, windows-latest]
+        os: [windows-latest, macos-latest]
+        arch: [amd64, arm64]
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -30,19 +32,11 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and push Docker image
+      - name: Build and push to Docker Hub
         uses: docker/build-push-action@v5
         with:
           context: .
-          platforms: linux/amd64,linux/arm64,linux/arm/v7
+          platforms: linux/amd64,linux/arm64
           push: true
-          tags: KirankumarReddy86/assignment02:latest
-      - name: Verify Docker Image
-        run: |
-          docker run --rm KirankumarReddy86/assignment02:latest uname -m
-      - name: check Docker Status
-        run: docker info
-      - name: Pull Docker Image
-        run: docker pull KirankumarReddy86/assignment02:latest
-      - name: List Images
-        run: docker images
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/octopus:latest-${{ matrix.os }}-${{ matrix.arch }}
